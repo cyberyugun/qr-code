@@ -93,3 +93,8 @@ For author/contributor information, see the `AUTHORS` file.
 
 ## Contributing
 Contributions are welcome! Please feel free to submit bug reports, feature requests, or pull requests.
+
+## License
+This package is licensed under the MIT License. See the `LICENSE` file for details.
+
+You can save this content to a file named README.md in your project directory, and it will be ready to be used as the README file for your Flutter package.
