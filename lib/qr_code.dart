@@ -41,7 +41,7 @@ class QRCodeComponent extends StatefulWidget {
     this.margin = 4,
     required this.qrdata,
     this.scale = 4,
-    this.version = 24,
+    this.version,
     this.width = 10,
     this.alt,
     this.ariaLabel,
@@ -107,6 +107,7 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
   Widget build(BuildContext context) {
     switch (widget.elementType) {
       case "canvas":
+        print("canvas");
         return CustomPaint(
           size: Size(widget.width.toDouble(), widget.width.toDouble()),
           painter: QRCodePainter(
@@ -125,6 +126,7 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
           ),
         );
       case "svg":
+        print("svg");
       // Generate SVG QR code
       // Use qr_flutter or another library to generate SVG QR code
       // Example:
@@ -135,7 +137,7 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
       case "url":
       case "img":
       default:
-      // Return Image Widget
+        print("default");
         break;
     }
     return Container();
@@ -173,6 +175,7 @@ class QRCodePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    print("paint");
     Paint darkPaint = Paint()..color = colorDark;
     Paint lightPaint = Paint()..color = colorLight;
 
@@ -188,6 +191,7 @@ class QRCodePainter extends CustomPainter {
             squareSize,
             squareSize,
           );
+          print("draw");
           canvas.drawRect(rect, darkPaint);
         // } else {
         //   final Rect rect = Rect.fromLTWH(
@@ -233,6 +237,7 @@ class QRCodePainter extends CustomPainter {
   }
 
   void generateImage(Size size) async {
+    print("generate img start");
     final ui.PictureRecorder recorder = ui.PictureRecorder();
     final Canvas recorderCanvas = Canvas(recorder);
     paint(recorderCanvas, size);
@@ -242,6 +247,8 @@ class QRCodePainter extends CustomPainter {
         .then((byteData) => byteData!.buffer.asUint8List());
     final String base64Image = base64Encode(pngBytes);
     final SafeUrl safeUrl = trustedHtml("<img src='data:image/png;base64, $base64Image' alt='${alt ?? ''}' title='${title ?? ''}' />");
+
+    print("generate img end");
     qrCodeURL(safeUrl);
   }
 
@@ -264,6 +271,7 @@ class QRCodePainter extends CustomPainter {
 class SafeUrl {}
 
 SafeUrl trustedHtml(String s) {
+  print('safe');
   throw UnimplementedError();
 }
 
