@@ -1,4 +1,4 @@
-name: qr_code
+name: qrcode_component
 description: "QRCodeComponent is a Flutter widget that enables easy generation of QR codes within Flutter applications. It offers customizable options for QR code appearance, including colors, error correction levels, and overlay images. The widget supports rendering QR codes as canvas, SVG, or image elements and provides accessibility features such as alternate text and ARIA labels."
 version: 1.0.0
 author: Yudi Gunawan<yudigunawan52@gmail.com>

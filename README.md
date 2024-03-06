@@ -4,18 +4,18 @@ QRCodeComponent is a Flutter widget that allows you to generate QR codes easily 
 
 ## Installation
 
-To use this package, add `qr_code` as a dependency in your `pubspec.yaml` file.
+To use this package, add `qrcode_component` as a dependency in your `pubspec.yaml` file.
 
 ```yaml
 dependencies:
-  qr_code: ^1.0.0
+  qrcode_component: ^1.0.0
 ```
 
 
 Then, import the package in your Dart code:
 
 ```dart
-import 'package:qr_code/qr_code.dart';
+import 'package:qrcode_component/qr_code.dart';
 ```
 
 ## Usage

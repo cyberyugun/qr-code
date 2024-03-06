@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:qr_code/qr_code.dart'; // Replace 'your_package_name' with the actual name of your package
+import 'package:qrcode_component/qr_code.dart'; // Replace 'your_package_name' with the actual name of your package
 
 class MyQRScreen extends StatelessWidget {
   @override
