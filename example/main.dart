@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:qrcode_component/qr_code.dart'; // Replace 'your_package_name' with the actual name of your package
+import 'package:qrcode_component/qr_code.dart';
 
 class MyQRScreen extends StatelessWidget {
   @override
@@ -10,12 +10,10 @@ class MyQRScreen extends StatelessWidget {
       ),
       body: Center(
         child: QRCodeComponent(
-          qrdata: 'Your QR Code Data Here', // Provide the data for the QR code
+          qrdata: 'Your QR Code Data Here',
           qrCodeURL: (SafeUrl url) {
-            // Handle the generated QR code URL here
             print('QR Code URL: $url');
           },
-          // You can customize other properties here as needed
         ),
       ),
     );
