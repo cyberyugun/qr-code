@@ -90,7 +90,7 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
       widget.version ?? 24,
     );
     qrCode.addData(widget.qrdata);
-    // qrCode.make();
+    QrImage(qrCode);
     if (widget.imageSrc != null) {
       centerImage = AssetImage(widget.imageSrc!);
     }
