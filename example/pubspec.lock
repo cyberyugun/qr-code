@@ -150,11 +150,10 @@ packages:
   qrcode_component:
     dependency: "direct main"
     description:
-      name: qrcode_component
-      sha256: "3a2f5536f9f625d44d36fc96f6f443a435c50bef1769001cb12e417b7740d2aa"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.5"
+      path: ".."
+      relative: true
+    source: path
+    version: "2.0.2"
   sky_engine:
     dependency: transitive
     description: flutter

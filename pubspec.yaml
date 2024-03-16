@@ -1,6 +1,6 @@
 name: qrcode_component
 description: "Flutter widget for generating customizable QR codes with accessibility features."
-version: 2.0.1
+version: 2.0.2
 
 author: Yudi Gunawan<yudigunawan52@gmail.com>
 homepage: https://github.com/cyberyugun/qr-code

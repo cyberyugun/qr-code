@@ -78,9 +78,9 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: QRCodeComponent(
           qrData: 'Your QR Code Data Here',
-          color: Colors.blue,
-          imageSrc: 'images/gfx100s_sample_04_thum-1.jpg',
-          // imageUrl: 'https://fujifilm-x.com/wp-content/uploads/2021/01/gfx100s_sample_04_thum-1.jpg',
+          imageSrc: 'images/flutter-logo.png',
+          backgroundColor: Colors.red,
+          // imageUrl: 'https://storage.googleapis.com/cms-storage-bucket/0dbfcc7a59cd1cf16282.png',
         ),
       ),
     );

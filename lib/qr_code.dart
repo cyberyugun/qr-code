@@ -54,6 +54,7 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
             width: widget.width,
             height: widget.height,
             color: widget.backgroundColor,
+            padding: EdgeInsets.all(20),
             child: CustomPaint(
               size: Size(widget.width, widget.height),
               painter: QRCodePainter(widget.qrData, widget.color, widget.backgroundColor, snapshot.data),
@@ -122,7 +123,6 @@ class QRCodePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     QrCode qrCode = QrCode(4, QrErrorCorrectLevel.L);
     qrCode.addData(qrData);
-    var qrImage = QrImage(qrCode);
 
     double pixelSize = size.width / qrCode.moduleCount.toDouble();
 
@@ -131,10 +131,14 @@ class QRCodePainter extends CustomPainter {
     // Draw QR code pattern
     for (var x = 0; x < qrCode.moduleCount; x++) {
       for (var y = 0; y < qrCode.moduleCount; y++) {
-        var isDark = qrImage.isDark(y, x);
+        var isDark = QrImage(qrCode).isDark(y, x);
+
         if (isDark) {
-          Rect rect = Rect.fromLTWH(x.toDouble() * pixelSize, y.toDouble() * pixelSize, pixelSize, pixelSize);
-          canvas.drawRect(rect, paint);
+          // Draw only if the module is not overlapped by the image
+          if (image == null || !isImagePixel(x, y, size)) {
+            Rect rect = Rect.fromLTWH(x.toDouble() * pixelSize, y.toDouble() * pixelSize, pixelSize, pixelSize);
+            canvas.drawRect(rect, paint);
+          }
         }
       }
     }
@@ -143,6 +147,21 @@ class QRCodePainter extends CustomPainter {
     if (image != null) {
       drawCenterImage(canvas, size);
     }
+  }
+
+  bool isImagePixel(int x, int y, Size size) {
+    // Calculate the coordinates of the pixel in the image space
+    double imageSize = size.width * 0.3;
+    double imageX = (size.width - imageSize) / 2;
+    double imageY = (size.height - imageSize) / 2;
+    double pixelSize = imageSize / image!.width;
+
+    // Calculate the coordinates of the pixel in the image
+    int imagePixelX = ((x - imageX) / pixelSize).toInt();
+    int imagePixelY = ((y - imageY) / pixelSize).toInt();
+
+    // Check if the pixel coordinates are within the image boundaries
+    return imagePixelX >= 0 && imagePixelX < image!.width && imagePixelY >= 0 && imagePixelY < image!.height;
   }
 
   void drawCenterImage(Canvas canvas, Size size) {
@@ -166,3 +185,4 @@ class QRCodePainter extends CustomPainter {
   @override
   bool shouldRebuildSemantics(QRCodePainter oldDelegate) => false;
 }
+
