@@ -8,7 +8,7 @@ To use this package, add `qrcode_component` as a dependency in your `pubspec.yam
 
 ```yaml
 dependencies:
-  qrcode_component: ^2.0.0
+  qrcode_component: ^2.0.1
 ```
 
 
