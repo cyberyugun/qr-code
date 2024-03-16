@@ -1,249 +1,169 @@
+import 'dart:async';
 import 'dart:typed_data';
-import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for rootBundle
 import 'package:qr/qr.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter/painting.dart';
 
 class QRCodeComponent extends StatefulWidget {
-  final bool allowEmptyString;
-  final elementType;
-  final Color colorDark;
-  final Color colorLight;
-  final String? cssClass;
-  final int errorCorrectionLevel;
+  final String qrData;
+  final double width;
+  final double height;
+  final Color color;
+  final Color backgroundColor;
+  final String? imageUrl;
   final String? imageSrc;
-  final int? imageHeight;
-  final int? imageWidth;
-  final int margin;
-  late final String qrdata;
-  final int scale;
-  late final int? version;
-  final int width;
-  final String? alt;
-  final String? ariaLabel;
-  final String? title;
-  final Function(SafeUrl) qrCodeURL;
-
   QRCodeComponent({
-    this.allowEmptyString = false,
-    this.elementType = 'canvas',
-    this.colorDark = Colors.black,
-    this.colorLight = Colors.white,
-    this.cssClass,
-    this.errorCorrectionLevel = QrErrorCorrectLevel.M,
+    Key? key,
+    required this.qrData,
+    this.width = 200,
+    this.height = 200,
+    this.color = Colors.black,
+    this.backgroundColor = Colors.white,
+    this.imageUrl,
     this.imageSrc,
-    this.imageHeight,
-    this.imageWidth,
-    this.margin = 4,
-    required this.qrdata,
-    this.scale = 4,
-    this.version,
-    this.width = 10,
-    this.alt,
-    this.ariaLabel,
-    this.title,
-    required this.qrCodeURL,
-  });
+  }) : super(key: key);
 
   @override
   _QRCodeComponentState createState() => _QRCodeComponentState();
 }
 
 class _QRCodeComponentState extends State<QRCodeComponent> {
-  late QrCode qrCode;
-  late ImageProvider? centerImage;
+  late Future<ui.Image?> _imageFuture;
 
   @override
   void initState() {
     super.initState();
-    generateQRCode();
-  }
-
-  void generateQRCode() {
-    if (widget.version != null && widget.version! > 40) {
-      print("[qrcode] max value for 'version' is 40");
-      widget.version = 40;
-    } else if (widget.version != null && widget.version! < 1) {
-      print("[qrcode]'min value for 'version' is 1");
-      widget.version = 1;
-    } else if (widget.version != null && widget.version!.isNaN) {
-      print(
-          "[qrcode] version should be a number, defaulting to auto.");
-      widget.version = null;
+    if (widget.imageUrl != null || widget.imageSrc != null) {
+      if (widget.imageUrl != null) {
+        _imageFuture = loadImageFromUrl(widget.imageUrl!);
+      } else {
+        _imageFuture = loadImageFromAsset(widget.imageSrc!);
+      }
+    } else {
+      _imageFuture = Future.value(null);
     }
-
-    if (!isValidQrCodeText(widget.qrdata)) {
-      throw ("[qrcode] Field 'qrdata' is empty, set 'allowEmptyString=\"true\"' to overwrite this behaviour.");
-    }
-
-    // This is a workaround to allow an empty string as qrdata
-    if (isValidQrCodeText(widget.qrdata) && widget.qrdata.isEmpty) {
-      widget.qrdata = " ";
-    }
-    qrCode = QrCode.fromData(
-      data: widget.qrdata,
-      errorCorrectLevel: widget.errorCorrectionLevel,
-    );
-    QrImage(qrCode);
-    if (widget.imageSrc != null) {
-      centerImage = AssetImage(widget.imageSrc!);
-    }
-  }
-
-  bool isValidQrCodeText(String? data) {
-    if (widget.allowEmptyString == false) {
-      return !(data == null || data.isEmpty || data == "null");
-    }
-    return !(data == null);
   }
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(widget.width.toDouble(), widget.width.toDouble()),
-      painter: QRCodePainter(
-        qrCode: qrCode,
-        colorDark: widget.colorDark,
-        colorLight: widget.colorLight,
-        margin: widget.margin,
-        scale: widget.scale,
-        // centerImage: centerImage,
-        // imageHeight: widget.imageHeight,
-        // imageWidth: widget.imageWidth,
-        // alt: widget.alt,
-        // ariaLabel: widget.ariaLabel,
-        // title: widget.title,
-        qrCodeURL: widget.qrCodeURL,
-      ),
-    );;
+    return FutureBuilder<ui.Image?>(
+      future: _imageFuture,
+      builder: (context, snapshot) {
+        if ((widget.imageSrc == null || (widget.imageSrc != null && snapshot.data != null)) && (widget.imageUrl == null || (widget.imageUrl != null && snapshot.data != null))) {
+          return Container(
+            width: widget.width,
+            height: widget.height,
+            color: widget.backgroundColor,
+            child: CustomPaint(
+              size: Size(widget.width, widget.height),
+              painter: QRCodePainter(widget.qrData, widget.color, widget.backgroundColor, snapshot.data),
+            ),
+          );
+        } else {
+          return Container();
+        }
+      },
+    );
+  }
+
+  Future<ui.Image?> loadImageFromAsset(String assetPath) {
+    Completer<ui.Image?> completer = Completer<ui.Image?>();
+
+    rootBundle.load(assetPath).then((ByteData data) {
+      ui.instantiateImageCodec(Uint8List.view(data.buffer)).then((ui.Codec codec) {
+        codec.getNextFrame().then((ui.FrameInfo frameInfo) {
+          completer.complete(frameInfo.image);
+        }).catchError((e) {
+          print('Error decoding image: $e');
+          completer.completeError(e);
+        });
+      }).catchError((e) {
+        print('Error instantiating image codec: $e');
+        completer.completeError(e);
+      });
+    }).catchError((e) {
+      print('Error loading image from asset: $e');
+      completer.completeError(e);
+    });
+
+    return completer.future;
+  }
+
+  Future<ui.Image?> loadImageFromUrl(String url) async {
+    try {
+      final completer = Completer<ui.Image>();
+      final imageStream = NetworkImage(url).resolve(ImageConfiguration());
+      imageStream.addListener(ImageStreamListener(
+        (ImageInfo info, bool synchronousCall) {
+          completer.complete(info.image);
+        },
+        onError: (dynamic exception, StackTrace? stackTrace) {
+          print('Error loading image: $exception');
+          completer.completeError(exception);
+        },
+      ));
+      return completer.future;
+    } catch (e) {
+      print('Error loading image: $e');
+      return null;
+    }
   }
 }
 
 class QRCodePainter extends CustomPainter {
-  final QrCode qrCode;
-  final Color colorDark;
-  final Color colorLight;
-  final int margin;
-  final int scale;
-  final ImageProvider? centerImage;
-  final int? imageHeight;
-  final int? imageWidth;
-  final String? alt;
-  final String? ariaLabel;
-  final String? title;
-  final Function(SafeUrl) qrCodeURL;
+  final String qrData;
+  final Color color;
+  final Color backgroundColor;
+  final ui.Image? image;
 
-  QRCodePainter({
-    required this.qrCode,
-    required this.colorDark,
-    required this.colorLight,
-    required this.margin,
-    required this.scale,
-    this.centerImage,
-    this.imageHeight,
-    this.imageWidth,
-    this.alt,
-    this.ariaLabel,
-    this.title,
-    required this.qrCodeURL,
-  });
+  QRCodePainter(this.qrData, this.color, this.backgroundColor, this.image);
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint darkPaint = Paint()..color = colorDark;
-    Paint lightPaint = Paint()..color = colorLight;
+    QrCode qrCode = QrCode(4, QrErrorCorrectLevel.L);
+    qrCode.addData(qrData);
+    var qrImage = QrImage(qrCode);
 
-    final int dimension = qrCode.moduleCount * scale + margin * 2;
-    final double squareSize = size.shortestSide / dimension;
-    for (int x = 0; x < qrCode.moduleCount; x++) {
-      for (int y = 0; y < qrCode.moduleCount; y++) {
-        final isDark = QrImage(qrCode).isDark(y, x) == 1;
+    double pixelSize = size.width / qrCode.moduleCount.toDouble();
+
+    Paint paint = Paint()..color = color;
+
+    // Draw QR code pattern
+    for (var x = 0; x < qrCode.moduleCount; x++) {
+      for (var y = 0; y < qrCode.moduleCount; y++) {
+        var isDark = qrImage.isDark(y, x);
         if (isDark) {
-          final Rect rect = Rect.fromLTWH(
-            margin + x * squareSize,
-            margin + y * squareSize,
-            squareSize,
-            squareSize,
-          );
-          canvas.drawRect(rect, darkPaint);
-        } else {
-          final Rect rect = Rect.fromLTWH(
-            margin + x * squareSize,
-            margin + y * squareSize,
-            squareSize,
-            squareSize,
-          );
-          canvas.drawRect(rect, lightPaint);
+          Rect rect = Rect.fromLTWH(x.toDouble() * pixelSize, y.toDouble() * pixelSize, pixelSize, pixelSize);
+          canvas.drawRect(rect, paint);
         }
       }
     }
-    if (centerImage != null) {
-      centerImage!.resolve(ImageConfiguration()).addListener(
-        ImageStreamListener(
-              (ImageInfo image, bool synchronousCall) {
-            final double imageX = (size.width - imageWidth!) / 2;
-            final double imageY = (size.height - imageHeight!) / 2;
-            canvas.drawImage(
-              (image.image),
-              Offset(imageX, imageY),
-              Paint(),
-            );
-          },
-        ),
-      );
-    }
 
-    if (title != null) {
-      // Add title to canvas
+    // Draw image in the center if image is provided and loaded
+    if (image != null) {
+      drawCenterImage(canvas, size);
     }
-
-    if (ariaLabel != null) {
-      // Add aria label to canvas
-    }
-
-    if (alt != null) {
-      // Add alt text to canvas
-    }
-
-    generateImage(size);
   }
 
-  void generateImage(Size size) async {
-    final ui.PictureRecorder recorder = ui.PictureRecorder();
-    final Canvas recorderCanvas = Canvas(recorder);
-    paint(recorderCanvas, size);
-    final ui.Picture picture = recorder.endRecording();
-    final Uint8List pngBytes = await picture.toImage(size.width.floor(), size.height.floor())
-        .then((img) => img.toByteData(format: ui.ImageByteFormat.png))
-        .then((byteData) => byteData!.buffer.asUint8List());
-    final String base64Image = base64Encode(pngBytes);
-    final SafeUrl safeUrl = trustedHtml("<img src='data:image/png;base64, $base64Image' alt='${alt ?? ''}' title='${title ?? ''}' />");
-    qrCodeURL(safeUrl);
+  void drawCenterImage(Canvas canvas, Size size) {
+    // Calculate position for centering image
+    double imageSize = size.width * 0.3;
+    double imageX = (size.width - imageSize) / 2;
+    double imageY = (size.height - imageSize) / 2;
+
+    // Draw image
+    canvas.drawImageRect(
+      image!,
+      Rect.fromLTWH(0, 0, image!.width.toDouble(), image!.height.toDouble()),
+      Rect.fromLTWH(imageX, imageY, imageSize, imageSize),
+      Paint(),
+    );
   }
 
   @override
-  bool shouldRepaint(QRCodePainter oldDelegate) {
-    return qrCode != oldDelegate.qrCode ||
-        colorDark != oldDelegate.colorDark ||
-        colorLight != oldDelegate.colorLight ||
-        margin != oldDelegate.margin ||
-        scale != oldDelegate.scale ||
-        centerImage != oldDelegate.centerImage ||
-        imageHeight != oldDelegate.imageHeight ||
-        imageWidth != oldDelegate.imageWidth ||
-        alt != oldDelegate.alt ||
-        ariaLabel != oldDelegate.ariaLabel ||
-        title != oldDelegate.title;
-  }
+  bool shouldRepaint(QRCodePainter oldDelegate) => false;
+
+  @override
+  bool shouldRebuildSemantics(QRCodePainter oldDelegate) => false;
 }
-
-class SafeUrl {}
-
-SafeUrl trustedHtml(String s) {
-  throw UnimplementedError();
-}
-

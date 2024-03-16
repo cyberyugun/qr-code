@@ -1,53 +1,51 @@
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qrcode_component/qr_code.dart';
-import 'package:qrcode_component/qr_code.dart';
+import 'package:qrcode_component/qr_code.dart'; // Replace 'your_flutter_app' with your app name or path
 
 void main() {
-  testWidgets('QRCodeComponent renders correctly', (WidgetTester tester) async {
-    // Build the QRCodeComponent widget
-    await tester.pumpWidget(
-      QRCodeComponent(
-        qrdata: 'https://example.com',
-        qrCodeURL: (SafeUrl url) {},
-      ),
-    );
+  group('QRCodeComponent', () {
+    testWidgets('QR code generation test', (WidgetTester tester) async {
+      // Create a test QRCodeComponent widget with sample data
+      await tester.pumpWidget(
+        MaterialApp(
+          home: QRCodeComponent(
+            qrData: 'Test data',
+          ),
+        ),
+      );
 
-    // Verify that the QR code is rendered
-    expect(find.byType(CustomPaint), findsOneWidget);
-  });
+      // Verify that the CustomPaint widget is present
+      expect(find.byType(CustomPaint), findsOneWidget);
 
-  testWidgets('QRCodeComponent with image overlay renders correctly', (WidgetTester tester) async {
-    // Build the QRCodeComponent widget with an image overlay
-    await tester.pumpWidget(
-      QRCodeComponent(
-        qrdata: 'https://example.com',
-        qrCodeURL: (SafeUrl url) {},
-        imageSrc: 'assets/logo.png',
-      ),
-    );
+      // Get the CustomPaint widget
+      final customPaint = tester.widget<CustomPaint>(find.byType(CustomPaint));
 
-    // Verify that the QR code with image overlay is rendered
-    expect(find.byType(CustomPaint), findsOneWidget);
-    expect(find.byType(Image), findsOneWidget);
-  });
+      // Get the QRCodePainter from CustomPaint
+      final qrCodePainter = customPaint.painter as QRCodePainter;
 
-  testWidgets('QRCodeComponent emits correct SafeUrl', (WidgetTester tester) async {
-    // Initialize variables to store emitted SafeUrl
-    SafeUrl? emittedUrl;
+      // Get the image from the QRCodePainter
+      final qrImage = qrCodePainter.image;
 
-    // Build the QRCodeComponent widget
-    await tester.pumpWidget(
-      QRCodeComponent(
-        qrdata: 'https://example.com',
-        qrCodeURL: (SafeUrl url) {
-          emittedUrl = url;
-        },
-      ),
-    );
+      // Verify that the image is not null
+      expect(qrImage, isNotNull);
 
-    // Verify that the SafeUrl is emitted correctly
-    expect(emittedUrl, isNotNull);
-    // Add further verification if needed
+      // Verify that the image is of type ui.Image
+      expect(qrImage, isA<ui.Image>());
+
+      // Verify that the image dimensions are correct
+      expect(qrImage!.width, 200);
+      expect(qrImage.height, 200);
+
+      // Convert the image to ByteData for further verification
+      final ByteData? byteData = await qrImage.toByteData(format: ui.ImageByteFormat.png);
+
+      // Verify that ByteData is not null
+      expect(byteData, isNotNull);
+
+      // Verify that ByteData contains data
+      expect(byteData?.lengthInBytes, greaterThan(0));
+    });
   });
 }
