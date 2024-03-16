@@ -84,12 +84,10 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
     if (isValidQrCodeText(widget.qrdata) && widget.qrdata.isEmpty) {
       widget.qrdata = " ";
     }
-
-    qrCode = QrCode(
-      widget.errorCorrectionLevel,
-      widget.version ?? 24,
+    qrCode = QrCode.fromData(
+      data: widget.qrdata,
+      errorCorrectLevel: widget.errorCorrectionLevel,
     );
-    qrCode.addData(widget.qrdata);
     QrImage(qrCode);
     if (widget.imageSrc != null) {
       centerImage = AssetImage(widget.imageSrc!);
@@ -105,42 +103,23 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
 
   @override
   Widget build(BuildContext context) {
-    switch (widget.elementType) {
-      case "canvas":
-        print("canvas");
-        return CustomPaint(
-          size: Size(widget.width.toDouble(), widget.width.toDouble()),
-          painter: QRCodePainter(
-            qrCode: qrCode,
-            colorDark: widget.colorDark,
-            colorLight: widget.colorLight,
-            margin: widget.margin,
-            scale: widget.scale,
-            centerImage: centerImage,
-            imageHeight: widget.imageHeight,
-            imageWidth: widget.imageWidth,
-            alt: widget.alt,
-            ariaLabel: widget.ariaLabel,
-            title: widget.title,
-            qrCodeURL: widget.qrCodeURL,
-          ),
-        );
-      case "svg":
-        print("svg");
-      // Generate SVG QR code
-      // Use qr_flutter or another library to generate SVG QR code
-      // Example:
-      // final svgString = await qrImage.svgString();
-      // Render SVG element
-      // svgString can be directly embedded in SVG widget
-        break;
-      case "url":
-      case "img":
-      default:
-        print("default");
-        break;
-    }
-    return Container();
+    return CustomPaint(
+      size: Size(widget.width.toDouble(), widget.width.toDouble()),
+      painter: QRCodePainter(
+        qrCode: qrCode,
+        colorDark: widget.colorDark,
+        colorLight: widget.colorLight,
+        margin: widget.margin,
+        scale: widget.scale,
+        // centerImage: centerImage,
+        // imageHeight: widget.imageHeight,
+        // imageWidth: widget.imageWidth,
+        // alt: widget.alt,
+        // ariaLabel: widget.ariaLabel,
+        // title: widget.title,
+        qrCodeURL: widget.qrCodeURL,
+      ),
+    );;
   }
 }
 
@@ -164,47 +143,44 @@ class QRCodePainter extends CustomPainter {
     required this.colorLight,
     required this.margin,
     required this.scale,
-    required this.centerImage,
-    required this.imageHeight,
-    required this.imageWidth,
-    required this.alt,
-    required this.ariaLabel,
-    required this.title,
+    this.centerImage,
+    this.imageHeight,
+    this.imageWidth,
+    this.alt,
+    this.ariaLabel,
+    this.title,
     required this.qrCodeURL,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    print("paint");
     Paint darkPaint = Paint()..color = colorDark;
     Paint lightPaint = Paint()..color = colorLight;
 
     final int dimension = qrCode.moduleCount * scale + margin * 2;
     final double squareSize = size.shortestSide / dimension;
-
     for (int x = 0; x < qrCode.moduleCount; x++) {
       for (int y = 0; y < qrCode.moduleCount; y++) {
-        // if (qrCode.isDark(y, x)) {
+        final isDark = QrImage(qrCode).isDark(y, x) == 1;
+        if (isDark) {
           final Rect rect = Rect.fromLTWH(
             margin + x * squareSize,
             margin + y * squareSize,
             squareSize,
             squareSize,
           );
-          print("draw");
           canvas.drawRect(rect, darkPaint);
-        // } else {
-        //   final Rect rect = Rect.fromLTWH(
-        //     margin + x * squareSize,
-        //     margin + y * squareSize,
-        //     squareSize,
-        //     squareSize,
-        //   );
-        //   canvas.drawRect(rect, lightPaint);
-        // }
+        } else {
+          final Rect rect = Rect.fromLTWH(
+            margin + x * squareSize,
+            margin + y * squareSize,
+            squareSize,
+            squareSize,
+          );
+          canvas.drawRect(rect, lightPaint);
+        }
       }
     }
-
     if (centerImage != null) {
       centerImage!.resolve(ImageConfiguration()).addListener(
         ImageStreamListener(
@@ -237,7 +213,6 @@ class QRCodePainter extends CustomPainter {
   }
 
   void generateImage(Size size) async {
-    print("generate img start");
     final ui.PictureRecorder recorder = ui.PictureRecorder();
     final Canvas recorderCanvas = Canvas(recorder);
     paint(recorderCanvas, size);
@@ -247,8 +222,6 @@ class QRCodePainter extends CustomPainter {
         .then((byteData) => byteData!.buffer.asUint8List());
     final String base64Image = base64Encode(pngBytes);
     final SafeUrl safeUrl = trustedHtml("<img src='data:image/png;base64, $base64Image' alt='${alt ?? ''}' title='${title ?? ''}' />");
-
-    print("generate img end");
     qrCodeURL(safeUrl);
   }
 
@@ -271,7 +244,6 @@ class QRCodePainter extends CustomPainter {
 class SafeUrl {}
 
 SafeUrl trustedHtml(String s) {
-  print('safe');
   throw UnimplementedError();
 }
 

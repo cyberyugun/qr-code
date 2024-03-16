@@ -10,3 +10,5 @@ All notable changes to this project will be documented in this file.
 - Support for rendering QR codes as canvas, SVG, or image elements.
 - Accessibility features including alternate text and ARIA labels.
 
+## [1.1.1] - 2024-03-07
+- prior changes
