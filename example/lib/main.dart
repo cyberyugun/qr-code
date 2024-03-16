@@ -79,7 +79,15 @@ class _MyHomePageState extends State<MyHomePage> {
         child: QRCodeComponent(
           qrData: 'Your QR Code Data Here',
           imageSrc: 'images/flutter-logo.png',
+          version: 10,
+          errorCorrectionLevel: 2,
           backgroundColor: Colors.red,
+          onStartGenerate: () => {
+            print('start')
+          },
+          onFinishGenerate: () => {
+            print('end')
+          },
           // imageUrl: 'https://storage.googleapis.com/cms-storage-bucket/0dbfcc7a59cd1cf16282.png',
         ),
       ),

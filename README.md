@@ -8,7 +8,7 @@ To use this package, add `qrcode_component` as a dependency in your `pubspec.yam
 
 ```yaml
 dependencies:
-  qrcode_component: ^2.0.1
+  qrcode_component: ^2.1.0
 ```
 
 
@@ -26,21 +26,36 @@ QRCodeComponent(
   qrData: 'Hello, World!',
   width: 200,
   height: 200,
+  errorCorrectionLevel: QrErrorCorrectLevel.L,
   color: Colors.black,
   backgroundColor: Colors.white,
   imageUrl: 'assets/images/logo.png',
   imageSrc: 'https://fujifilm-x.com/wp-content/uploads/2021/01/gfx100s_sample_04_thum-1.jpg',
+  onStartGenerate: () => {
+    print('start')
+  },
+  onFinishGenerate: () => {
+    print('end')
+  },
 ),
 ```
 
 ## Properties
-- color: The color of the dark modules in the QR code.
-- backgroundColor: The color of the light modules in the QR code.
-- imageSrc: The image source URL or path from local assets to overlay on the QR code.
-- imageUrl: The image source URL or path from external assets to overlay on the QR code.
-- width: The width of the QR code.
-- height: The height of the QR code.
-- qrData: The data to encode in the QR code.
+- color: The color of the dark modules in the QR code. // default: black
+- backgroundColor: The color of the light modules in the QR code. // default: white
+- imageSrc: The image source URL or path from local assets to overlay on the QR code. // default: null
+- imageUrl: The image source URL or path from external assets to overlay on the QR code. // default: null
+- width: The width of the QR code. // default: 200
+- height: The height of the QR code. // default: 200
+- qrData: The data to encode in the QR code. // required
+- errorCorrectionLevel: The error correction level of the QR code. // default: 1
+    static const int L = 1;
+    static const int M = 0;
+    static const int Q = 3;
+    static const int H = 2;
+- onStartGenerate: The `onStartGenerate` callback is invoked at the beginning of the QR code generation process.
+- onFinishGenerate: The `onFinishGenerate` callback is invoked when the QR code generation process has finished.
+- version: The version (size) of the QR code.
 
 ## Examples
 

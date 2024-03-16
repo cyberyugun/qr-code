@@ -12,3 +12,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 - change description
+
+## [2.0.2] - 2024-03-16
+
+### Added
+- background custom fixed
+
+## [2.1.0] - 2024-03-16
+
+### Added
+- errorCorrectionLevel custom
+- version custom
+- onStartGenerate callback and onFinishGenerate calback

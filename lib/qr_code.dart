@@ -12,6 +12,10 @@ class QRCodeComponent extends StatefulWidget {
   final Color backgroundColor;
   final String? imageUrl;
   final String? imageSrc;
+  final int errorCorrectionLevel;
+  final int version;
+  final Function()? onStartGenerate; // Callback for when generation starts
+  final Function()? onFinishGenerate; // Callback for when generation finishes
   QRCodeComponent({
     Key? key,
     required this.qrData,
@@ -21,6 +25,10 @@ class QRCodeComponent extends StatefulWidget {
     this.backgroundColor = Colors.white,
     this.imageUrl,
     this.imageSrc,
+    this.errorCorrectionLevel = QrErrorCorrectLevel.L, // Default to Low error correction level
+    this.version = 4, // Default to version 4
+    this.onStartGenerate,
+    this.onFinishGenerate,
   }) : super(key: key);
 
   @override
@@ -33,6 +41,9 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
   @override
   void initState() {
     super.initState();
+    if (widget.onStartGenerate != null) {
+       widget.onStartGenerate!(); // Trigger onStartGenerate callback when generation starts
+    }
     if (widget.imageUrl != null || widget.imageSrc != null) {
       if (widget.imageUrl != null) {
         _imageFuture = loadImageFromUrl(widget.imageUrl!);
@@ -57,7 +68,15 @@ class _QRCodeComponentState extends State<QRCodeComponent> {
             padding: EdgeInsets.all(20),
             child: CustomPaint(
               size: Size(widget.width, widget.height),
-              painter: QRCodePainter(widget.qrData, widget.color, widget.backgroundColor, snapshot.data),
+              painter: QRCodePainter(
+                widget.qrData,
+                widget.color,
+                widget.backgroundColor,
+                snapshot.data,
+                widget.errorCorrectionLevel,
+                widget.version,
+                widget.onFinishGenerate
+              ),
             ),
           );
         } else {
@@ -116,12 +135,15 @@ class QRCodePainter extends CustomPainter {
   final Color color;
   final Color backgroundColor;
   final ui.Image? image;
+  final int errorCorrectionLevel;
+  final int version;
+  final Function()? onFinishGenerate;
 
-  QRCodePainter(this.qrData, this.color, this.backgroundColor, this.image);
+  QRCodePainter(this.qrData, this.color, this.backgroundColor, this.image, this.errorCorrectionLevel, this.version, this.onFinishGenerate);
 
   @override
   void paint(Canvas canvas, Size size) {
-    QrCode qrCode = QrCode(4, QrErrorCorrectLevel.L);
+    QrCode qrCode = QrCode(version, errorCorrectionLevel); // Initialize QR code with specified version and error correction level
     qrCode.addData(qrData);
 
     double pixelSize = size.width / qrCode.moduleCount.toDouble();
@@ -129,12 +151,25 @@ class QRCodePainter extends CustomPainter {
     Paint paint = Paint()..color = color;
 
     // Draw QR code pattern
+    drawQRCode(canvas, size, qrCode, paint, pixelSize).then((value) => {
+      if (onFinishGenerate != null) {
+        onFinishGenerate!()
+      }
+    });
+
+    // Draw image in the center if image is provided and loaded
+    if (image != null) {
+      drawCenterImage(canvas, size);
+    }
+  }
+
+  Future<void> drawQRCode(Canvas canvas, Size size, QrCode qrCode, Paint paint, double pixelSize) async {
     for (var x = 0; x < qrCode.moduleCount; x++) {
       for (var y = 0; y < qrCode.moduleCount; y++) {
         var isDark = QrImage(qrCode).isDark(y, x);
 
         if (isDark) {
-          // Draw only if the module is not overlapped by the image
+          // Check if the current module is not overlapped by the image
           if (image == null || !isImagePixel(x, y, size)) {
             Rect rect = Rect.fromLTWH(x.toDouble() * pixelSize, y.toDouble() * pixelSize, pixelSize, pixelSize);
             canvas.drawRect(rect, paint);
@@ -142,12 +177,8 @@ class QRCodePainter extends CustomPainter {
         }
       }
     }
-
-    // Draw image in the center if image is provided and loaded
-    if (image != null) {
-      drawCenterImage(canvas, size);
-    }
   }
+
 
   bool isImagePixel(int x, int y, Size size) {
     // Calculate the coordinates of the pixel in the image space
@@ -185,4 +216,3 @@ class QRCodePainter extends CustomPainter {
   @override
   bool shouldRebuildSemantics(QRCodePainter oldDelegate) => false;
 }
-
